@@ -1,0 +1,59 @@
+blueprint:
+  name: "Aqara MCCGQ11LM Door Sensor / Action Mapper"
+  description: "Trigger on opened (debounced) and run configured action(s)."
+  domain: automation
+  
+  input:
+    sensor_entity:
+      name: Door sensor entity
+      description: "Select the binary_sensor entity for the door/contact."
+      selector:
+        entity:
+          domain: binary_sensor
+
+    open_for:
+      name: Debounce duration
+      description: "How long the sensor must remain in the opened/closed state before the automation fires."
+      default: 00:00:02
+      selector:
+        duration: {}
+
+    on_open_action:
+      name: Action when opened
+      description: "Action(s) to run when the door opens."
+      selector:
+        action: {}
+      default: []
+
+    on_close_action:
+      name: Action when closed
+      description: "Action(s) to run when the door closes."
+      selector:
+        action: {}
+      default: []
+
+trigger:
+  - platform: state
+    entity_id: !input sensor_entity
+    to: "on"
+    for: !input open_for
+
+  - platform: state
+    entity_id: !input sensor_entity
+    to: "off"
+    for: !input open_for
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state is defined and trigger.to_state.state == 'on' }}"
+        sequence: !input on_open_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state is defined and trigger.to_state.state == 'off' }}"
+        sequence: !input on_close_action
+    default: []
+
+mode: single
