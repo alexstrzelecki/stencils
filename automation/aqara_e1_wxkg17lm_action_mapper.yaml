@@ -1,0 +1,150 @@
+blueprint:
+  name: "Aqara E1 (WXKG17LM) Switch / Action Mapper"
+  description: >
+    Map single/double/hold button actions from an Aqara E1 to independent action sequences.
+    Handles payloads produced by zigbee2mqtt (trigger.payload = "single_left") and other trigger forms.
+  domain: automation
+  input:
+    device:
+      name: Button device
+      selector:
+        device: {}
+    device_domain:
+      name: Device integration domain
+      description: "Integration domain used by the device trigger (e.g. mqtt, zha, deconz, zigbee2mqtt)."
+      default: "mqtt"
+      selector:
+        text: {}
+    single_left_action:
+      name: single_left action
+      selector:
+        action: {}
+      default: []
+    single_right_action:
+      name: single_right action
+      selector:
+        action: {}
+      default: []
+    single_both_action:
+      name: single_both action
+      selector:
+        action: {}
+      default: []
+    double_left_action:
+      name: double_left action
+      selector:
+        action: {}
+      default: []
+    double_right_action:
+      name: double_right action
+      selector:
+        action: {}
+      default: []
+    hold_left_action:
+      name: hold_left action
+      selector:
+        action: {}
+      default: []
+    hold_right_action:
+      name: hold_right action
+      selector:
+        action: {}
+      default: []
+
+trigger:
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "single_left"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "single_right"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "single_both"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "double_left"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "double_right"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "hold_left"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "hold_right"
+
+action:
+  - variables:
+      action_value: >-
+        {% if trigger.subtype is defined %}
+          {{ trigger.subtype }}
+        {% elif trigger.payload is defined %}
+          {{ trigger.payload }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.action is defined %}
+          {{ trigger.event.data.action }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.payload is defined %}
+          {% set p = trigger.event.data.payload %}
+          {% if p is string %}
+            {% set j = p | from_json %}
+          {% else %}
+            {% set j = p %}
+          {% endif %}
+          {{ j.action if j is mapping and 'action' in j else '' }}
+        {% else %}
+          ''
+        {% endif %}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'single_left' }}"
+        sequence: !input single_left_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'single_right' }}"
+        sequence: !input single_right_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'single_both' }}"
+        sequence: !input single_both_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'double_left' }}"
+        sequence: !input double_left_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'double_right' }}"
+        sequence: !input double_right_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'hold_left' }}"
+        sequence: !input hold_left_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'hold_right' }}"
+        sequence: !input hold_right_action
+
+    default: []
+
+mode: single

@@ -1,0 +1,125 @@
+blueprint:
+  name: "Philips Hue Smart Button (8718699693985) / Action Mapper"
+  description: >
+    Map on/off/press/hold/release button actions from a Philips Hue smart button to independent action sequences.
+    Works with device triggers and MQTT payloads (zigbee2mqtt, etc).
+  domain: automation
+  input:
+    device:
+      name: Button device
+      selector:
+        device: {}
+    device_domain:
+      name: Device integration domain
+      description: "Integration domain used by the device trigger (e.g. mqtt, zha, deconz, zigbee2mqtt)."
+      default: "mqtt"
+      selector:
+        text: {}
+    on_action:
+      name: on action
+      description: Action(s) to run when action is 'on'
+      selector:
+        action: {}
+      default: []
+    off_action:
+      name: off action
+      description: Action(s) to run when action is 'off'
+      selector:
+        action: {}
+      default: []
+    press_action:
+      name: press action
+      description: Action(s) to run when action is 'press'
+      selector:
+        action: {}
+      default: []
+    hold_action:
+      name: hold action
+      description: Action(s) to run when action is 'hold'
+      selector:
+        action: {}
+      default: []
+    release_action:
+      name: release action
+      description: Action(s) to run when action is 'release'
+      selector:
+        action: {}
+      default: []
+
+trigger:
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "on"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "off"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "press"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "hold"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "release"
+
+action:
+  - variables:
+      action_value: >-
+        {% if trigger.subtype is defined %}
+          {{ trigger.subtype }}
+        {% elif trigger.payload is defined %}
+          {{ trigger.payload }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.action is defined %}
+          {{ trigger.event.data.action }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.payload is defined %}
+          {% set p = trigger.event.data.payload %}
+          {% if p is string %}
+            {% set j = p | from_json %}
+          {% else %}
+            {% set j = p %}
+          {% endif %}
+          {{ j.action if j is mapping and 'action' in j else '' }}
+        {% else %}
+          ''
+        {% endif %}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'on' }}"
+        sequence: !input on_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'off' }}"
+        sequence: !input off_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'press' }}"
+        sequence: !input press_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'hold' }}"
+        sequence: !input hold_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'release' }}"
+        sequence: !input release_action
+
+    default: []
+
+mode: single

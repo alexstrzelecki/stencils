@@ -1,0 +1,141 @@
+blueprint:
+  name: "Aqara WXKG11LM Single-Button / Action Mapper"
+  description: >
+    Map single/double/triple/quadruple/hold/release button actions from an Aqara WXKG11LM (or similar) to independent action sequences.
+    Handles payloads produced by zigbee2mqtt and other trigger forms.
+  domain: automation
+  input:
+    device:
+      name: Button device
+      selector:
+        device: {}
+    device_domain:
+      name: Device integration domain
+      description: "Integration domain used by the device trigger (e.g. mqtt, zha, deconz, zigbee2mqtt)."
+      default: "mqtt"
+      selector:
+        text: {}
+    single_action:
+      name: single action
+      description: Action(s) to run when button action is 'single'
+      selector:
+        action: {}
+      default: []
+    double_action:
+      name: double action
+      description: Action(s) to run when button action is 'double'
+      selector:
+        action: {}
+      default: []
+    triple_action:
+      name: triple action
+      description: Action(s) to run when button action is 'triple'
+      selector:
+        action: {}
+      default: []
+    quadruple_action:
+      name: quadruple action
+      description: Action(s) to run when button action is 'quadruple'
+      selector:
+        action: {}
+      default: []
+    hold_action:
+      name: hold action
+      description: Action(s) to run when button action is 'hold'
+      selector:
+        action: {}
+      default: []
+    release_action:
+      name: release action
+      description: Action(s) to run when button action is 'release'
+      selector:
+        action: {}
+      default: []
+
+trigger:
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "single"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "double"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "triple"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "quadruple"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "hold"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "release"
+
+action:
+  - variables:
+      action_value: >-
+        {% if trigger.subtype is defined %}
+          {{ trigger.subtype }}
+        {% elif trigger.payload is defined %}
+          {{ trigger.payload }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.action is defined %}
+          {{ trigger.event.data.action }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.payload is defined %}
+          {% set p = trigger.event.data.payload %}
+          {% if p is string %}
+            {% set j = p | from_json %}
+          {% else %}
+            {% set j = p %}
+          {% endif %}
+          {{ j.action if j is mapping and 'action' in j else '' }}
+        {% else %}
+          ''
+        {% endif %}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'single' }}"
+        sequence: !input single_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'double' }}"
+        sequence: !input double_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'triple' }}"
+        sequence: !input triple_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'quadruple' }}"
+        sequence: !input quadruple_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'hold' }}"
+        sequence: !input hold_action
+
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == 'release' }}"
+        sequence: !input release_action
+
+    default: []
+
+mode: single
