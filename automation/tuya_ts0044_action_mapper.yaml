@@ -1,0 +1,250 @@
+blueprint:
+  name: "Tuya / Moes Four-Button Switch / Action Mapper"
+  description: >
+    Map a four-button switch's actions to independent action sequences.
+    Available events (labels): 1_single, 1_double, 1_hold,
+    2_single, 2_double, 2_hold,
+    3_single, 3_double, 3_hold,
+    4_single, 4_double, 4_hold.
+  domain: automation
+
+  input:
+    device:
+      name: Button device
+      description: The physical four-button device to use for triggers.
+      selector:
+        device: {}
+
+    device_domain:
+      name: Device integration domain
+      description: Integration domain used by the device trigger (e.g. mqtt, zha, zigbee2mqtt).
+      default: "mqtt"
+      selector:
+        text: {}
+
+    # Button 1
+    b1_single_action:
+      name: "1_single action"
+      description: Action(s) to run for 1_single
+      selector:
+        action: {}
+      default: []
+    b1_double_action:
+      name: "1_double action"
+      description: Action(s) to run for 1_double
+      selector:
+        action: {}
+      default: []
+    b1_hold_action:
+      name: "1_hold action"
+      description: Action(s) to run for 1_hold
+      selector:
+        action: {}
+      default: []
+
+    # Button 2
+    b2_single_action:
+      name: "2_single action"
+      description: Action(s) to run for 2_single
+      selector:
+        action: {}
+      default: []
+    b2_double_action:
+      name: "2_double action"
+      description: Action(s) to run for 2_double
+      selector:
+        action: {}
+      default: []
+    b2_hold_action:
+      name: "2_hold action"
+      description: Action(s) to run for 2_hold
+      selector:
+        action: {}
+      default: []
+
+    # Button 3
+    b3_single_action:
+      name: "3_single action"
+      description: Action(s) to run for 3_single
+      selector:
+        action: {}
+      default: []
+    b3_double_action:
+      name: "3_double action"
+      description: Action(s) to run for 3_double
+      selector:
+        action: {}
+      default: []
+    b3_hold_action:
+      name: "3_hold action"
+      description: Action(s) to run for 3_hold
+      selector:
+        action: {}
+      default: []
+
+    # Button 4
+    b4_single_action:
+      name: "4_single action"
+      description: Action(s) to run for 4_single
+      selector:
+        action: {}
+      default: []
+    b4_double_action:
+      name: "4_double action"
+      description: Action(s) to run for 4_double
+      selector:
+        action: {}
+      default: []
+    b4_hold_action:
+      name: "4_hold action"
+      description: Action(s) to run for 4_hold
+      selector:
+        action: {}
+      default: []
+
+trigger:
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "1_single"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "1_double"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "1_hold"
+
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "2_single"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "2_double"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "2_hold"
+
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "3_single"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "3_double"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "3_hold"
+
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "4_single"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "4_double"
+  - platform: device
+    device_id: !input device
+    domain: !input device_domain
+    type: action
+    subtype: "4_hold"
+
+action:
+  - variables:
+      action_value: >-
+        {% if trigger.subtype is defined %}
+          {{ trigger.subtype }}
+        {% elif trigger.payload is defined %}
+          {{ trigger.payload }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.action is defined %}
+          {{ trigger.event.data.action }}
+        {% elif trigger.event is defined and trigger.event.data is defined and trigger.event.data.payload is defined %}
+          {% set p = trigger.event.data.payload %}
+          {% if p is string %}
+            {% set j = p | from_json %}
+          {% else %}
+            {% set j = p %}
+          {% endif %}
+          {{ j.action if j is mapping and 'action' in j else '' }}
+        {% else %}
+          ''
+        {% endif %}
+
+  - choose:
+      # Button 1
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '1_single' }}"
+        sequence: !input b1_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '1_double' }}"
+        sequence: !input b1_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '1_hold' }}"
+        sequence: !input b1_hold_action
+
+      # Button 2
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '2_single' }}"
+        sequence: !input b2_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '2_double' }}"
+        sequence: !input b2_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '2_hold' }}"
+        sequence: !input b2_hold_action
+
+      # Button 3
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '3_single' }}"
+        sequence: !input b3_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '3_double' }}"
+        sequence: !input b3_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '3_hold' }}"
+        sequence: !input b3_hold_action
+
+      # Button 4
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '4_single' }}"
+        sequence: !input b4_single_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '4_double' }}"
+        sequence: !input b4_double_action
+      - conditions:
+          - condition: template
+            value_template: "{{ action_value == '4_hold' }}"
+        sequence: !input b4_hold_action
+
+    default: []
+
+mode: single
